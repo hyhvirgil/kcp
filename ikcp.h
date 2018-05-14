@@ -1,4 +1,4 @@
-//=====================================================================
+﻿//=====================================================================
 //
 // KCP - A Better ARQ Protocol Implementation
 // skywind3000 (at) gmail.com, 2010-2011
@@ -264,9 +264,9 @@ struct IKCPSEG
 	IUINT32 sn;
 	IUINT32 una;
 	IUINT32 len;
-	IUINT32 resendts;
+	IUINT32 resendts; // 重传时间戳 
 	IUINT32 rto;
-	IUINT32 fastack;
+	IUINT32 fastack; // 经过多少次快速确认 
 	IUINT32 xmit;
 	char data[1];
 };
@@ -277,28 +277,28 @@ struct IKCPSEG
 //---------------------------------------------------------------------
 struct IKCPCB
 {
-	IUINT32 conv, mtu, mss, state;
-	IUINT32 snd_una, snd_nxt, rcv_nxt;
-	IUINT32 ts_recent, ts_lastack, ssthresh;
-	IINT32 rx_rttval, rx_srtt, rx_rto, rx_minrto;
-	IUINT32 snd_wnd, rcv_wnd, rmt_wnd, cwnd, probe;
-	IUINT32 current, interval, ts_flush, xmit;
-	IUINT32 nrcv_buf, nsnd_buf;
-	IUINT32 nrcv_que, nsnd_que;
-	IUINT32 nodelay, updated;
+	IUINT32 conv, mtu, mss, state; // mss(Maximum Segment Size)最大报文段长度 
+	IUINT32 snd_una, snd_nxt, rcv_nxt; // snd_una发送的未答复序列号, snd_nxt下个发送，rcv_nxt下个要接收的序列号  
+	IUINT32 ts_recent, ts_lastack, ssthresh; // ssthresh(slow start threshold)慢启动, 
+	IINT32 rx_rttval, rx_srtt, rx_rto, rx_minrto;// rx_rttval一半往返时间，rx_srtt往返时间？rx_rto自动重传超时，rx_minrto最小重传超时
+	IUINT32 snd_wnd, rcv_wnd, rmt_wnd, cwnd, probe;// snd_wnd、rcv_wnd发送接收窗口大小， rmt_wnd(remote window)对方接收窗口包数, cwnd计算窗口大小？ 
+	IUINT32 current, interval, ts_flush, xmit;// current当前时间, interval刷新间隔, ts_flush下次刷新时间，
+	IUINT32 nrcv_buf, nsnd_buf;// buf的长度 
+	IUINT32 nrcv_que, nsnd_que;// queue的长度 
+	IUINT32 nodelay, updated;// nodelay无延迟模式，updated调用ikcp_flush前是否调用ikcp_update?为什么不调用ikcp_flush后置为0？ 
 	IUINT32 ts_probe, probe_wait;
 	IUINT32 dead_link, incr;
 	struct IQUEUEHEAD snd_queue;
-	struct IQUEUEHEAD rcv_queue;
+	struct IQUEUEHEAD rcv_queue; // 实际接收数据的队列 
 	struct IQUEUEHEAD snd_buf;
-	struct IQUEUEHEAD rcv_buf;
-	IUINT32 *acklist;
-	IUINT32 ackcount;
-	IUINT32 ackblock;
+	struct IQUEUEHEAD rcv_buf; // 临时接收数据的队列，数据符合要求才放到rcv_queue中 
+	IUINT32 *acklist;	// 记录到达序列号、时间戳。 
+	IUINT32 ackcount;	// list实际使用数
+	IUINT32 ackblock;	// list节目的数目  
 	void *user;
-	char *buffer;
-	int fastresend;
-	int nocwnd, stream;
+	char *buffer; // 发送数据缓冲区 
+	int fastresend; // 快速重传模式 设置2（2次ACK跨越将会直接重传）
+	int nocwnd, stream;// nocwnd是否关闭流控, steam 是否是流(比特流？) ，判断是否能拼接到之前的数据段中 
 	int logmask;
 	int (*output)(const char *buf, int len, struct IKCPCB *kcp, void *user);
 	void (*writelog)(const char *log, struct IKCPCB *kcp, void *user);
