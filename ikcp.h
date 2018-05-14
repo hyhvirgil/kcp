@@ -266,8 +266,8 @@ struct IKCPSEG
 	IUINT32 len;
 	IUINT32 resendts; // 重传时间戳 
 	IUINT32 rto;
-	IUINT32 fastack; // 经过多少次快速确认 
-	IUINT32 xmit;
+	IUINT32 fastack; // 跨越次数，快速重传   
+	IUINT32 xmit; // 发送次数 
 	char data[1];
 };
 

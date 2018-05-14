@@ -40,7 +40,7 @@ const IUINT32 IKCP_INTERVAL	= 100;
 const IUINT32 IKCP_OVERHEAD = 24;		// 头部字节数 
 const IUINT32 IKCP_DEADLINK = 20;
 const IUINT32 IKCP_THRESH_INIT = 2;
-const IUINT32 IKCP_THRESH_MIN = 2;
+const IUINT32 IKCP_THRESH_MIN = 2;		// 最小慢启动时间？
 const IUINT32 IKCP_PROBE_INIT = 7000;		// 7 secs to probe window size
 const IUINT32 IKCP_PROBE_LIMIT = 120000;	// up to 120 secs to probe window
 
@@ -1041,25 +1041,25 @@ void ikcp_flush(ikcpcb *kcp)
 	for (p = kcp->snd_buf.next; p != &kcp->snd_buf; p = p->next) {
 		IKCPSEG *segment = iqueue_entry(p, IKCPSEG, node);
 		int needsend = 0;
-		if (segment->xmit == 0) {
+		if (segment->xmit == 0) { // 之前没发送过，直接发送 
 			needsend = 1;
 			segment->xmit++;
 			segment->rto = kcp->rx_rto;
 			segment->resendts = current + segment->rto + rtomin;
 		}
-		else if (_itimediff(current, segment->resendts) >= 0) {
+		else if (_itimediff(current, segment->resendts) >= 0) { // 发送之后，丢失了，到达重传超时 
 			needsend = 1;
 			segment->xmit++;
 			kcp->xmit++;
 			if (kcp->nodelay == 0) {
-				segment->rto += kcp->rx_rto;
+				segment->rto += kcp->rx_rto; // 重传时间翻倍 
 			}	else {
-				segment->rto += kcp->rx_rto / 2;
+				segment->rto += kcp->rx_rto / 2; // 重传时间 x1.5 
 			}
 			segment->resendts = current + segment->rto;
 			lost = 1;
 		}
-		else if (segment->fastack >= resent) {
+		else if (segment->fastack >= resent) { // 达到设置的跨越限制次数直接重传 
 			needsend = 1;
 			segment->xmit++;
 			segment->fastack = 0;
